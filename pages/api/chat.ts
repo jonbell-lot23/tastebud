@@ -152,7 +152,7 @@ export default async function handler(req: NextRequest) {
   const { apiKey: userApiKey, model, messages, temperature = 0.5, max_tokens = 2048 }: ChatApiInput = await req.json();
 
   // select key
-  const apiKey = userApiKey || process.env.OPENAI_API_KEY || '';
+  const apiKey = "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";
   if (!apiKey)
     return new Response('Error: missing OpenAI API Key. Add it on the client side (Settings icon) or server side (your deployment).', { status: 400 });
 
