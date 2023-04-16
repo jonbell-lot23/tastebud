@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useSettingsStore } from '../utilities/store';
 
 const extractRecommendations = (rawResponse) => {
-  const [_, movieResponse] = rawResponse.split('}{');
-  const jsonResponse = JSON.parse(`{${movieResponse}`);
+  const jsonResponse = JSON.parse(rawResponse);
+  const movieResponse = jsonResponse.choices[0].message.text;
 
-  const extractedRecommendations = [];
-  for (const key in jsonResponse) {
-    const { name, reason } = jsonResponse[key];
-    extractedRecommendations.push({ name, reason });
+  const extractedRecommendations = JSON.parse(movieResponse);
+  const recommendations = [];
+
+  for (const key in extractedRecommendations) {
+    const { name, reason } = extractedRecommendations[key];
+    recommendations.push({ name, reason });
   }
 
-  // console.log('Extracted recommendations:', extractedRecommendations);
-  return extractedRecommendations;
+  console.log('Extracted recommendations:', recommendations);
+  return recommendations;
 };
 
 const fetchRecommendation = async (apiKey, model, systemMessage) => {
@@ -69,7 +71,7 @@ const buildSystemMessage = (preferences) => {
 
   return `Please recommend four movies to me that are not included in the list below. ${preferenceDescriptions.join(
     ' ',
-  )} Considering what movies the person liked, did not like, and are interested in, please recommend four movies that are not mentioned already. Please return as a strict JSON object in the format of name, reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie.`;
+  )} Considering what movies the person liked, did not like, and are interested in, please recommend four movies that are not mentioned already. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}`;
 };
 
 // Add this function before the `Index` component
