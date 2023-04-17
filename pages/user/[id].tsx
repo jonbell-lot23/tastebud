@@ -75,7 +75,7 @@ const buildSystemMessage = (preferences) => {
 
   const totalMessage = `${preferenceDescriptions.join(
     ' ',
-  )} Give me a list of four movies not in that list based on the preferences in that list. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}.`;
+  )} Give me a list of four movie recommendations based on the preferences I've shared. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}. DO NOT LIST ANY MOVIES I ALREADY MENTIONED IN THIS RESPONSE.`;
 
   console.log(totalMessage);
   return totalMessage;
