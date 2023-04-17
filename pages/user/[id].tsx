@@ -75,7 +75,7 @@ const buildSystemMessage = (preferences) => {
 
   const totalMessage = `${preferenceDescriptions.join(
     ' ',
-  )} Give me a list of four movie recommendations based on the preferences I've shared. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}. DO NOT LIST ANY MOVIES I ALREADY MENTIONED IN THIS RESPONSE.`;
+  )} Give me a list of four movie recommendations. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}. DO NOT LIST ANY MOVIES I ALREADY MENTIONED IN THIS RESPONSE. DO NOT LIST ANY OTHER RESPONSE OTHER THAN THE JSON LIST OF FOUR MOVIES.`;
 
   console.log(totalMessage);
   return totalMessage;
