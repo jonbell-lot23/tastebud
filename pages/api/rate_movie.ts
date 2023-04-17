@@ -25,8 +25,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { movieTitle, action } = req.body;
+  const { userId, movieTitle, action } = req.body; // Add userId to the destructuring assignment
   const ratingEnumValue = mapActionToRatingEnum(action);
+
 
   try {
     const movie = await prisma.movie.upsert({
@@ -46,7 +47,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         },
         user: {
           connectOrCreate: {
-            where: { id: 1 }, // Use a hardcoded user ID for now, replace with actual user ID in a real app
+            where: { id: parseInt(userId) }, // Update this line to use the userId from the request body
             create: {},
           },
         },

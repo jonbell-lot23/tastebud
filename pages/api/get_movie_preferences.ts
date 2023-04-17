@@ -21,12 +21,18 @@ const mapRatingEnumToAction = (ratingEnum) => {
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const userId = 1;
+  const { userId } = req.query;
+  const parsedUserId = parseInt(userId as string);
+
+   if (isNaN(parsedUserId)) {
+    res.status(400).json({ error: 'Invalid user ID' });
+    return;
+  }
 
   try {
     console.log('Fetching movie preferences...');
     const preferences = await prisma.movieRatings.findMany({
-      where: { userId: userId },
+      where: { userId: parsedUserId },
       include: { movie: true },
     });
 
