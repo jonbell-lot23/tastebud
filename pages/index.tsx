@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSettingsStore } from '../utilities/store';
 
 const extractRecommendations = (rawResponse) => {
-  const jsonResponse = JSON.parse(rawResponse);
-  const movieResponse = jsonResponse.choices[0].message.text;
-
-  const extractedRecommendations = JSON.parse(movieResponse);
+  const extractedRecommendations = JSON.parse(rawResponse);
   const recommendations = [];
 
   for (const key in extractedRecommendations) {
@@ -42,9 +39,15 @@ const fetchRecommendation = async (apiKey, model, systemMessage) => {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
+    // Replace response.text() with response.json()
     const rawResponse = await response.text();
     console.log('API raw response:', rawResponse);
-    const recommendations = extractRecommendations(rawResponse);
+    const cleanedRawResponse = rawResponse.replace(/^\{"model":"[^"]+"\}/, '');
+    console.log('Cleaned raw response:', cleanedRawResponse);
+    const jsonResponse = JSON.parse(cleanedRawResponse);
+
+    console.log('API JSON response:', jsonResponse);
+    const recommendations = extractRecommendations(cleanedRawResponse);
 
     return recommendations;
   } catch (error) {
@@ -55,11 +58,11 @@ const fetchRecommendation = async (apiKey, model, systemMessage) => {
 
 const buildSystemMessage = (preferences) => {
   const actions = [
-    { key: 'liked', label: 'liked' },
-    { key: 'notLiked', label: 'not liked' },
-    { key: 'interested', label: 'Interested' },
-    { key: 'notInterested', label: 'Not Interested' },
-    { key: 'unsure', label: 'unsure' },
+    { key: 'Like', label: 'liked' },
+    { key: "Didn't like", label: 'not liked' },
+    { key: 'Interested', label: 'Interested' },
+    { key: 'Not interested', label: 'Not Interested' },
+    { key: 'Unsure', label: 'unsure' },
   ];
 
   const preferenceDescriptions = actions.map((action) => {
@@ -74,7 +77,6 @@ const buildSystemMessage = (preferences) => {
   )} Considering what movies the person liked, did not like, and are interested in, please recommend four movies that are not mentioned already. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}`;
 };
 
-// Add this function before the `Index` component
 const fetchMoviePreferences = async () => {
   try {
     const response = await fetch('/api/get_movie_preferences');
@@ -83,11 +85,11 @@ const fetchMoviePreferences = async () => {
     }
     const responseJson = await response.json();
     const mappedResponse = {
-      liked: responseJson.liked || [],
-      notLiked: responseJson.not_liked || [],
-      interested: responseJson.interested || [],
-      notInterested: responseJson.not_interested || [],
-      unsure: responseJson.unsure || [],
+      Like: responseJson.Like || [],
+      "Didn't like": responseJson["Didn't like"] || [],
+      Interested: responseJson.Interested || [],
+      'Not interested': responseJson['Not interested'] || [],
+      Unsure: responseJson.Unsure || [],
     };
     return mappedResponse;
   } catch (error) {
