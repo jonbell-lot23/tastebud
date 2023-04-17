@@ -3,6 +3,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const prisma = new PrismaClient();
 
+const mapRatingEnumToAction = (ratingEnum) => {
+  switch (ratingEnum) {
+    case 'Like':
+      return 'Like';
+    case 'DidNotLike':
+      return "Didn't like";
+    case 'Interested':
+      return 'Interested';
+    case 'NotInterested':
+      return 'Not interested';
+    case 'Unsure':
+      return 'Unsure';
+    default:
+      throw new Error(`Invalid rating enum value: ${ratingEnum}`);
+  }
+};
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const userId = 1;
 
@@ -16,12 +33,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     console.log('Fetched movie preferences:', preferences);
 
     const preferencesByAction = preferences.reduce((acc, pref) => {
-      if (!acc[pref.rating]) {
-        acc[pref.rating] = [];
+      const action = mapRatingEnumToAction(pref.rating);
+      if (!acc[action]) {
+        acc[action] = [];
       }
-      acc[pref.rating].push(pref.movie.title);
+      acc[action].push(pref.movie.title);
       return acc;
-    }, {} as Record<MovieRatings['rating'], string[]>);
+    }, {} as Record<string, string[]>);
 
     console.log('Mapped preferences by action:', preferencesByAction);
 

@@ -67,14 +67,17 @@ const buildSystemMessage = (preferences) => {
 
   const preferenceDescriptions = actions.map((action) => {
     const movies = preferences[action.key] || [];
-    const message = `Here are movies marked by this user as ${action.label}: ${movies.length ? movies.join(', ') : '(none)'}.`;
-    console.log(message);
-    return message;
+    const prefMessage = `Here are movies marked by this user as ${action.label}: ${movies.length ? movies.join(', ') : '(none)'}.`;
+    console.log(prefMessage);
+    return prefMessage;
   });
 
-  return `${preferenceDescriptions.join(
+  const totalMessage = `${preferenceDescriptions.join(
     ' ',
-  )} Considering this list of preferences, please recommend four movies. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}} Remember, do not recommend anything that has already been listed in the list I provided earlier. Respond as if you're a friendly and helpful Blockbuster clerk who knows me well. Sometimes try more controversial movies I might not have heard of so I can tune the algorithm. DO NOT RETURN ANY MOVIES I ALREADY MENTIONED.`;
+  )} Give me a list of four movies not in that list that someone born in 2007 might like. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}.`;
+
+  console.log(totalMessage);
+  return totalMessage;
 };
 
 const fetchMoviePreferences = async () => {

@@ -3,12 +3,30 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const mapActionToRatingEnum = (action) => {
+  switch (action) {
+    case 'Like':
+      return 'Like';
+    case "Didn't like":
+      return 'DidNotLike';
+    case 'Interested':
+      return 'Interested';
+    case 'Not interested':
+      return 'NotInterested';
+    case 'Unsure':
+      return 'Unsure';
+    default:
+      throw new Error(`Invalid action value: ${action}`);
+  }
+};
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { movieTitle, action } = req.body;
+  const ratingEnumValue = mapActionToRatingEnum(action);
 
   try {
     const movie = await prisma.movie.upsert({
@@ -19,7 +37,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     const rating = await prisma.movieRatings.create({
       data: {
-        rating: action,
+        rating: ratingEnumValue,
         rationale: '',
         movie: {
           connect: {
