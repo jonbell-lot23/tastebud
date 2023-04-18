@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const mapActionToRatingEnum = (action) => {
+const mapActionToRatingEnum = (action: string) => {
   switch (action) {
     case 'Like':
       return 'Like';
