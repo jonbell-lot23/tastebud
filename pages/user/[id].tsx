@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSettingsStore } from '../../utilities/store';
 
-const extractRecommendations = (rawResponse) => {
+type Recommendation = {
+  name: string;
+  reason: string;
+};
+
+const extractRecommendations = (rawResponse: string): Recommendation[] => {
   const extractedRecommendations = JSON.parse(rawResponse);
-  const recommendations = [];
+  const recommendations: Recommendation[] = [];
 
   for (const key in extractedRecommendations) {
     const { name, reason } = extractedRecommendations[key];
@@ -15,7 +20,7 @@ const extractRecommendations = (rawResponse) => {
   return recommendations;
 };
 
-const fetchRecommendation = async (apiKey, model, systemMessage) => {
+const fetchRecommendation = async (apiKey: string, model: string, systemMessage: string): Promise<Recommendation[]> => {
   const payload = {
     apiKey: apiKey,
     model: model,
@@ -40,24 +45,21 @@ const fetchRecommendation = async (apiKey, model, systemMessage) => {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    // Replace response.text() with response.json()
     const rawResponse = await response.text();
     console.log('API raw response:', rawResponse);
     const cleanedRawResponse = rawResponse.replace(/^\{"model":"[^"]+"\}/, '');
     console.log('Cleaned raw response:', cleanedRawResponse);
-    const jsonResponse = JSON.parse(cleanedRawResponse);
 
-    console.log('API JSON response:', jsonResponse);
     const recommendations = extractRecommendations(cleanedRawResponse);
 
     return recommendations;
   } catch (error) {
     console.error('Error fetching recommendation:', error);
-    return { name: 'Failed to fetch recommendation', description: '' };
+    return [{ name: 'Failed to fetch recommendation', reason: '' }];
   }
 };
 
-const buildSystemMessage = (preferences) => {
+const buildSystemMessage = (preferences: Record<string, string[]>): string => {
   const actions = [
     { key: 'Like', label: 'liked' },
     { key: "Didn't like", label: 'not liked' },
@@ -81,7 +83,7 @@ const buildSystemMessage = (preferences) => {
   return totalMessage;
 };
 
-const fetchMoviePreferences = async (userId) => {
+const fetchMoviePreferences = async (userId: number): Promise<Record<string, string[]>> => {
   try {
     const response = await fetch(`/api/get_movie_preferences?userId=${userId}`);
     if (!response.ok) {
@@ -102,20 +104,53 @@ const fetchMoviePreferences = async (userId) => {
   }
 };
 
-const Index = () => {
+type MoviePreferencesProps = {
+  preferences: Record<string, string[]>;
+};
+
+const MoviePreferences = ({ preferences }: MoviePreferencesProps): JSX.Element => {
+  const leftColumn = ['Interested', 'Like'];
+  const rightColumn = ["Didn't like", 'Not interested', 'Unsure'];
+
+  const renderPreferences = (keys: string[]) => {
+    return keys.map((key) => (
+      <div key={key}>
+        <h3>{key}:</h3>
+        <ul>
+          {(preferences[key] || []).map((movie, index) => (
+            <li key={index}>{movie}</li>
+          ))}
+        </ul>
+      </div>
+    ));
+  };
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ flex: '0 0 45%' }}>{renderPreferences(leftColumn as string[])}</div>
+      <div style={{ flex: '0 0 45%' }}>{renderPreferences(rightColumn as string[])}</div>
+    </div>
+  );
+};
+
+const Index = (): JSX.Element => {
   const router = useRouter();
   const { id } = router.query;
-  const userId = parseInt(id);
+  const userId = id && typeof id === 'string' ? parseInt(id) : NaN;
 
-  const [recommendations, setRecommendations] = useState([]);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const { apiKey, chatModelId } = useSettingsStore((state) => ({
     apiKey: state.apiKey,
     chatModelId: state.chatModelId,
   }));
 
+  const [moviePreferences, setMoviePreferences] = useState({});
+
   useEffect(() => {
     const fetchAndDisplayData = async () => {
       const fetchedPreferences = await fetchMoviePreferences(userId);
+      setMoviePreferences(fetchedPreferences); // Add this line
+
       const systemMessage = buildSystemMessage(fetchedPreferences);
       const fetchedRecommendations = await fetchRecommendation(apiKey, chatModelId, systemMessage);
       setRecommendations(fetchedRecommendations);
@@ -126,7 +161,7 @@ const Index = () => {
     }
   }, [apiKey, chatModelId, userId]); // Add userId to the dependency array as well.
 
-  const handleButtonClick = async (recommendation, action) => {
+  const handleButtonClick = async (recommendation: Recommendation, action: string) => {
     console.log(`"${recommendation.name}" marked as "${action}"`);
 
     try {
@@ -155,6 +190,7 @@ const Index = () => {
   return (
     <div style={{ maxWidth: '40rem', margin: '0 auto', padding: '1rem' }}>
       <h1 style={{ textAlign: 'center', marginTop: '2rem' }}>TasteBuddy</h1>
+      <MoviePreferences preferences={moviePreferences} />
       {recommendations.length ? (
         recommendations.map((recommendation, index) => (
           <React.Fragment key={index}>

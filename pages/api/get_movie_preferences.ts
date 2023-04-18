@@ -3,7 +3,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const prisma = new PrismaClient();
 
-const mapRatingEnumToAction = (ratingEnum) => {
+type RatingAction = 'Like' | "Didn't like" | 'Interested' | 'Not interested' | 'Unsure';
+
+type MoviePreferences = {
+  [key in RatingAction]: string[];
+};
+
+const mapRatingEnumToAction = (ratingEnum: string): RatingAction => {
   switch (ratingEnum) {
     case 'Like':
       return 'Like';
@@ -20,11 +26,11 @@ const mapRatingEnumToAction = (ratingEnum) => {
   }
 };
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+const handler = async (req: NextApiRequest, res: NextApiResponse<MoviePreferences | { error: string }>) => {
   const { userId } = req.query;
   const parsedUserId = parseInt(userId as string);
 
-   if (isNaN(parsedUserId)) {
+  if (isNaN(parsedUserId)) {
     res.status(400).json({ error: 'Invalid user ID' });
     return;
   }
@@ -45,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
       acc[action].push(pref.movie.title);
       return acc;
-    }, {} as Record<string, string[]>);
+    }, {} as MoviePreferences);
 
     console.log('Mapped preferences by action:', preferencesByAction);
 
@@ -56,4 +62,4 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-export { handler as default };
+export default handler;
