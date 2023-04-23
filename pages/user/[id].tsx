@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSettingsStore } from '../../utilities/store';
+import MoviePoster from '../../components/MoviePoster';
+import RandomPrompt from '../../components/RandomPrompt';
 
 type Recommendation = {
   name: string;
@@ -8,7 +10,8 @@ type Recommendation = {
 };
 
 const extractRecommendations = (rawResponse: string): Recommendation[] => {
-  const extractedRecommendations = JSON.parse(rawResponse);
+  const cleanedResponse = rawResponse.replace(/\\\\/g, '\\');
+  const extractedRecommendations = JSON.parse(cleanedResponse);
   const recommendations: Recommendation[] = [];
 
   for (const key in extractedRecommendations) {
@@ -60,6 +63,8 @@ const fetchRecommendation = async (apiKey: string, model: string, systemMessage:
 };
 
 const buildSystemMessage = (preferences: Record<string, string[]>): string => {
+  const randomPrompt = RandomPrompt();
+
   const actions = [
     { key: 'Like', label: 'liked' },
     { key: "Didn't like", label: 'not liked' },
@@ -77,7 +82,7 @@ const buildSystemMessage = (preferences: Record<string, string[]>): string => {
 
   const totalMessage = `${preferenceDescriptions.join(
     ' ',
-  )} Give me a list of four movie recommendations. Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}. DO NOT LIST ANY MOVIES I ALREADY MENTIONED IN THIS RESPONSE. DO NOT LIST ANY OTHER RESPONSE OTHER THAN THE JSON LIST OF FOUR MOVIES.`;
+  )} Considering the ratings so far, return a list of four movie recommendations. ${randomPrompt} Please return your response in a strict JSON object format, with each recommendation containing a name and reason for recommendation. The reason for recommendation should be concise and focus on why people like it, rather than being a review of the movie. Example format: {"1": {"name": "Movie Name", "reason": "Reason"}, "2": {"name": "Movie Name", "reason": "Reason"}}.`;
 
   console.log(totalMessage);
   return totalMessage;
@@ -116,11 +121,13 @@ const MoviePreferences = ({ preferences }: MoviePreferencesProps): JSX.Element =
     return keys.map((key) => (
       <div key={key}>
         <h3>{key}:</h3>
-        <ul>
+        <div>
           {(preferences[key] || []).map((movie, index) => (
-            <li key={index}>{movie}</li>
+            <span key={index}>
+              <MoviePoster movieTitle={movie} width="20px" />
+            </span>
           ))}
-        </ul>
+        </div>
       </div>
     ));
   };
@@ -169,7 +176,7 @@ const Index = (): JSX.Element => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userId, // Add this line
+          userId: userId,
           movieTitle: recommendation.name,
           action: action,
         }),
@@ -194,25 +201,29 @@ const Index = (): JSX.Element => {
       {recommendations.length ? (
         recommendations.map((recommendation, index) => (
           <React.Fragment key={index}>
-            <h2 style={{ marginTop: '2rem' }}>{recommendation.name}</h2>
-            <p style={{ marginTop: '1rem' }}>{recommendation.reason}</p>
-            <div style={{ marginTop: '1rem' }}>
-              {['Like', "Didn't like", 'Interested', 'Not interested', 'Unsure'].map((action) => (
-                <button
-                  key={action}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    marginRight: '0.5rem',
-                    marginBottom: '0.5rem',
-                    cursor: 'pointer',
-                    borderRadius: '3px',
-                    backgroundColor: '#efefef',
-                  }}
-                  onClick={() => handleButtonClick(recommendation, action)}
-                >
-                  {action}
-                </button>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <MoviePoster movieTitle={recommendation.name} width="130px" />
+              <div style={{ marginLeft: '1rem' }}>
+                <p>{recommendation.reason}</p>
+                <div style={{ marginTop: '1rem' }}>
+                  {['Like', "Didn't like", 'Interested', 'Not interested', 'Unsure'].map((action) => (
+                    <button
+                      key={action}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        marginRight: '0.5rem',
+                        marginBottom: '0.5rem',
+                        cursor: 'pointer',
+                        borderRadius: '3px',
+                        backgroundColor: '#efefef',
+                      }}
+                      onClick={() => handleButtonClick(recommendation, action)}
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </React.Fragment>
         ))
